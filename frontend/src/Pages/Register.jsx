@@ -39,8 +39,10 @@ function Register() {
         },
       });
     } catch (error) {
-      console.log(error);
-      alert("Registration Failed");
+      console.log("ERROR =>", error);
+      console.log("DATA =>", error.response?.data);
+
+      alert(error.response?.data?.message || "Registration Failed");
     } finally {
       setLoading(false);
     }

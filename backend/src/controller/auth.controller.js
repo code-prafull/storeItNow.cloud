@@ -45,11 +45,16 @@ const register = async (req, res) => {
       otpExpiry,
     });
 
-    await sendEmail(
-      email,
-      "StoreIt Email Verification",
-      `Your OTP is ${otp}`
-    );
+    try {
+      await sendEmail(
+        email,
+        "StoreIt Email Verification",
+        `Your OTP is ${otp}`
+      );
+    } catch (emailErr) {
+      console.error("Register email send failed:", emailErr && emailErr.message ? emailErr.message : emailErr);
+      // don't fail registration if email fails
+    }
 
     return res.status(201).json({
       success: true,
@@ -292,12 +297,16 @@ const forgotPassword = async (req, res) => {
 
     await user.save();
 
-    // Send Email
-    await sendEmail(
-      email,
-      "StoreIt Password Reset OTP",
-      `Your password reset OTP is ${otp}`
-    );
+    try {
+      await sendEmail(
+        email,
+        "StoreIt Password Reset OTP",
+        `Your password reset OTP is ${otp}`
+      );
+    } catch (emailErr) {
+      console.error("Forgot-password email send failed:", emailErr && emailErr.message ? emailErr.message : emailErr);
+      // continue — OTP saved, respond success
+    }
 
     return res.status(200).json({
       success: true,
