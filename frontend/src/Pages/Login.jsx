@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { loginUser } from "../api/authApi";
 
 function Login() {
@@ -225,13 +225,13 @@ function Login() {
                 >
                   Password
                 </label>
-                <a
-                  onClick={() => navigate("/forgot-password")}
+                <Link
+                  to="/forgot-password"
                   className="text-xs font-semibold hover:underline"
                   style={{ color: "#0078d4" }}
                 >
                   Forgot password?
-                </a>
+                </Link>
               </div>
               <input
                 type="password"
@@ -367,13 +367,13 @@ function Login() {
           {/* External Navigation Link */}
           <p className="text-center text-sm mt-8" style={{ color: "#605e5c" }}>
             Don't have an account?{" "}
-            <a
-              href="/register"
+            <Link
+              to="/register"
               className="font-semibold hover:underline"
               style={{ color: "#0078d4" }}
             >
               Create one
-            </a>
+            </Link>
           </p>
         </div>
       </div>
