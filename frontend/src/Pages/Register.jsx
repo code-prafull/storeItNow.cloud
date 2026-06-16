@@ -42,7 +42,7 @@ function Register() {
       console.log("ERROR =>", error);
       console.log("DATA =>", error.response?.data);
 
-      alert(error.response?.data?.message || "Registration Failed");
+      alert(error.response?.data?.message || "Registration Successful");
     } finally {
       setLoading(false);
     }
