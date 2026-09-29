@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/axios";
-import { ArrowLeft, ArrowRight, ShieldAlert, CheckCircle2, AlertCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, AlertCircle } from "lucide-react";
 
 function ForgotPassword() {
   const navigate = useNavigate();
@@ -25,9 +25,13 @@ function ForgotPassword() {
       });
       
       // Verification text padhne ke liye chhota sa delay
+      // devOtp tabhi aata hai jab email configured na ho (local dev)
       setTimeout(() => {
         navigate("/reset-password", {
-          state: { email }
+          state: {
+            email,
+            devOtp: response.data.devOtp,
+          },
         });
       }, 1500);
 

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import api from "../api/axios";
-import { ArrowRight, CheckCircle2, AlertCircle, Eye, EyeOff } from "lucide-react";
+import { ArrowRight, CheckCircle2, AlertCircle, Eye, EyeOff, RefreshCw } from "lucide-react";
 
 function ResetPassword() {
   const location = useLocation();
@@ -15,11 +15,50 @@ function ResetPassword() {
   // UI enhancement states
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isResending, setIsResending] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
+
+  // Email configured nahi hai to backend devOtp bhejta hai (dev only)
+  const [devOtp, setDevOtp] = useState(location.state?.devOtp || null);
+
+  // Naya reset code bhejne ke liye
+  const handleResend = async () => {
+    if (!email || isResending) return;
+
+    setIsResending(true);
+    setMessage({ type: "", text: "" });
+
+    try {
+      const response = await api.post("/auth/forgot-password", { email });
+
+      setDevOtp(response.data.devOtp || null);
+      setOtp("");
+      setMessage({
+        type: "success",
+        text: response.data.message || "A new code is on its way.",
+      });
+    } catch (error) {
+      setMessage({
+        type: "error",
+        text: error.response?.data?.message || "Could not resend the code. Try again.",
+      });
+    } finally {
+      setIsResending(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!otp.trim() || !newPassword.trim()) return;
+
+    // Page refresh ke baad email state chala jata hai
+    if (!email) {
+      setMessage({
+        type: "error",
+        text: "We lost the email for this session — start Forgot Password again.",
+      });
+      return;
+    }
 
     setIsLoading(true);
     setMessage({ type: "", text: "" });
@@ -90,6 +129,29 @@ function ResetPassword() {
           </div>
         )}
 
+        {/* Dev only — email configured na ho to wahi code yahan dikh jata hai */}
+        {devOtp && (
+          <div className="mb-5 p-3 rounded-sm border bg-[#fff4ce] border-[#f7d154] text-[#6b5a00] text-xs">
+            <span className="font-semibold block mb-1.5 leading-snug">
+              Mail abhi send nahi ho raha (EMAIL_USER / EMAIL_PASS khaale hain) —
+              aapka reset code:
+            </span>
+            <span className="font-mono font-bold text-lg tracking-[0.3em] text-[#201f1e] block">
+              {devOtp}
+            </span>
+          </div>
+        )}
+
+        {/* Page refresh ke baad email state chala jata hai */}
+        {!email && (
+          <div className="mb-5 p-3 rounded-sm border bg-[#fde7e9] border-[#fde7e9] text-[#a80000] text-xs font-medium flex items-start gap-2">
+            <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+            <span className="leading-snug">
+              We lost the email for this session. Go back and start Forgot Password again.
+            </span>
+          </div>
+        )}
+
         {/* Form Submission Layout */}
         <form onSubmit={handleSubmit} className="space-y-6">
           
@@ -101,8 +163,12 @@ function ResetPassword() {
               disabled={isLoading}
               placeholder="Verification Code (OTP)"
               value={otp}
-              onChange={(e) => setOtp(e.target.value)}
-              className="w-full bg-transparent text-sm py-2 outline-none font-normal text-[#201f1e] placeholder-[#605e5c] disabled:opacity-50 tracking-wide"
+              onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              maxLength={6}
+              aria-label="Verification code"
+              className="w-full bg-transparent text-sm py-2 outline-none font-normal text-[#201f1e] placeholder-[#605e5c] disabled:opacity-50 tracking-widest font-mono font-bold"
             />
           </div>
 
@@ -129,16 +195,29 @@ function ResetPassword() {
 
           {/* Bottom Actions Row */}
           <div className="flex items-center justify-between pt-2">
-            
-            {/* Cancel Trigger */}
-            <button
-              type="button"
-              onClick={() => navigate("/")}
-              disabled={isLoading}
-              className="text-xs font-semibold text-[#605e5c] hover:text-[#201f1e] hover:underline transition-all cursor-pointer bg-transparent border-none outline-none"
-            >
-              Cancel
-            </button>
+             
+            <div className="flex items-center gap-4">
+              {/* Cancel Trigger */}
+              <button
+                type="button"
+                onClick={() => navigate("/")}
+                disabled={isLoading}
+                className="text-xs font-semibold text-[#605e5c] hover:text-[#201f1e] hover:underline transition-all cursor-pointer bg-transparent border-none outline-none"
+              >
+                Cancel
+              </button>
+
+              {/* Naya reset code bhejo */}
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={isLoading || isResending || !email}
+                className="text-xs font-semibold text-[#0078d4] hover:text-[#106ebe] hover:underline transition-all cursor-pointer bg-transparent border-none outline-none disabled:text-[#a19f9d] disabled:no-underline flex items-center gap-1"
+              >
+                <RefreshCw className={`w-3 h-3 ${isResending ? "animate-spin" : ""}`} />
+                {isResending ? "Sending…" : "Resend code"}
+              </button>
+            </div>
 
             {/* Flat Microsoft Blue Button */}
             <button

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { verifyOtp } from "../api/authApi";
-import { ArrowRight, CheckCircle2, AlertCircle } from "lucide-react";
+import { verifyOtp, resendOtp } from "../api/authApi";
+import { ArrowRight, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react";
 
 function VerifyOtp() {
   const location = useLocation();
@@ -11,13 +11,51 @@ function VerifyOtp() {
   
   // UI enhancement states
   const [isLoading, setIsLoading] = useState(false);
+  const [isResending, setIsResending] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
 
+  // Email configured nahi hai to backend devOtp bhejta hai (dev only)
+  const [devOtp, setDevOtp] = useState(location.state?.devOtp || null);
+
   const email = location.state?.email;
+
+  // Verify page par dobara code bhejne ke liye
+  const handleResend = async () => {
+    if (!email || isResending) return;
+
+    setIsResending(true);
+    setMessage({ type: "", text: "" });
+
+    try {
+      const data = await resendOtp(email);
+
+      setDevOtp(data.devOtp || null);
+      setOtp("");
+      setMessage({
+        type: "success",
+        text: data.message || "A new code is on its way.",
+      });
+    } catch (error) {
+      setMessage({
+        type: "error",
+        text: error.response?.data?.message || "Could not resend the code. Try again.",
+      });
+    } finally {
+      setIsResending(false);
+    }
+  };
 
   const handleVerify = async (e) => {
     e.preventDefault();
     if (!otp.trim()) return;
+
+    if (!email) {
+      setMessage({
+        type: "error",
+        text: "Session expired — go back and register again.",
+      });
+      return;
+    }
 
     setIsLoading(true);
     setMessage({ type: "", text: "" });
@@ -29,11 +67,15 @@ function VerifyOtp() {
       });
 
       localStorage.setItem("token", data.token);
-      
+
+      if (data.user?.role) {
+        localStorage.setItem("role", data.user.role);
+      }
+
       setMessage({ type: "success", text: "Identity verified successfully. Redirecting..." });
 
       setTimeout(() => {
-        navigate("/dashboard");
+        navigate(data.user?.role === "admin" ? "/admin" : "/dashboard");
       }, 1500);
 
     } catch (error) {
@@ -92,6 +134,29 @@ function VerifyOtp() {
           </div>
         )}
 
+        {/* Dev only — email configured na ho to wahi code yahan dikh jata hai */}
+        {devOtp && (
+          <div className="mb-5 p-3 rounded-sm border bg-[#fff4ce] border-[#f7d154] text-[#6b5a00] text-xs">
+            <span className="font-semibold block mb-1.5 leading-snug">
+              Mail abhi send nahi ho raha (EMAIL_USER / EMAIL_PASS khaale hain) —
+              aapka code:
+            </span>
+            <span className="font-mono font-bold text-lg tracking-[0.3em] text-[#201f1e] block">
+              {devOtp}
+            </span>
+          </div>
+        )}
+
+        {/* Page refresh ke baad email state chala jata hai */}
+        {!email && (
+          <div className="mb-5 p-3 rounded-sm border bg-[#fde7e9] border-[#fde7e9] text-[#a80000] text-xs font-medium flex items-start gap-2">
+            <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+            <span className="leading-snug">
+              We lost the email for this session. Go back and register again.
+            </span>
+          </div>
+        )}
+
         {/* Verification Request Pipeline Form */}
         <form onSubmit={handleVerify} className="space-y-6">
           
@@ -103,7 +168,10 @@ function VerifyOtp() {
               disabled={isLoading}
               placeholder="Code"
               value={otp}
-              onChange={(e) => setOtp(e.target.value)}
+              onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              aria-label="Verification code"
               className="w-full bg-transparent text-sm py-2 outline-none font-normal text-[#201f1e] placeholder-[#605e5c] disabled:opacity-50 tracking-widest font-mono font-bold"
               maxLength={6}
             />
@@ -112,15 +180,27 @@ function VerifyOtp() {
           {/* Bottom Actions Row */}
           <div className="flex items-center justify-between pt-2">
             
-            {/* Cancellation Trigger */}
-            <button
-              type="button"
-              onClick={() => navigate("/")}
-              disabled={isLoading}
-              className="text-xs font-semibold text-[#605e5c] hover:text-[#201f1e] hover:underline transition-all cursor-pointer bg-transparent border-none outline-none"
-            >
-              Cancel
-            </button>
+            {/* Left: cancel + resend */}
+            <div className="flex items-center gap-4">
+              <button
+                type="button"
+                onClick={() => navigate("/")}
+                disabled={isLoading}
+                className="text-xs font-semibold text-[#605e5c] hover:text-[#201f1e] hover:underline transition-all cursor-pointer bg-transparent border-none outline-none"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={isLoading || isResending || !email}
+                className="text-xs font-semibold text-[#0078d4] hover:text-[#106ebe] hover:underline transition-all cursor-pointer bg-transparent border-none outline-none disabled:text-[#a19f9d] disabled:no-underline flex items-center gap-1"
+              >
+                <RefreshCw className={`w-3 h-3 ${isResending ? "animate-spin" : ""}`} />
+                {isResending ? "Sending…" : "Resend code"}
+              </button>
+            </div>
 
             {/* Flat Microsoft Blue Action Button */}
             <button

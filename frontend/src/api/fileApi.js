@@ -1,6 +1,6 @@
 import api from "./axios";
 
-export const uploadFile = async (file, folderId = null) => {
+export const uploadFile = async (file, folderId = null, onProgress) => {
 
   const token = localStorage.getItem("token");
 
@@ -16,6 +16,11 @@ export const uploadFile = async (file, folderId = null) => {
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "multipart/form-data"
+      },
+      onUploadProgress: (event) => {
+        if (typeof onProgress === "function" && event.total) {
+          onProgress(Math.round((event.loaded * 100) / event.total));
+        }
       }
     }
   );
@@ -60,7 +65,7 @@ export const searchFiles = async (query) => {
   const token = localStorage.getItem("token");
 
   const response = await api.get(
-    `/files/search?query=${query}`,
+    `/files/search?query=${encodeURIComponent(query || "")}`,
     {
       headers: {
         Authorization: `Bearer ${token}`

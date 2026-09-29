@@ -1,7 +1,8 @@
 const Razorpay = require("razorpay");
 
 const keyId = process.env.RAZORPAY_KEY_ID;
-const keySecret = process.env.RAZORPAY_KEY_SECRET;
+const keySecret =
+  process.env.RAZORPAY_KEY_SECRET || process.env.RAZORPAY_SECRET;
 
 // Masked debug helper
 const mask = (s) => (s && s.length > 6 ? `${s.slice(0, 4)}...${s.slice(-2)}` : s || '<<missing>>');

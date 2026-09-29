@@ -1,6 +1,6 @@
 const nodemailer = require("nodemailer");
 
-const sendEmail = async (to, subject, text) => {
+const sendEmail = async (to, subject, text, html) => {
 
     const transporter = nodemailer.createTransport({
       service: "gmail",
@@ -16,19 +16,21 @@ const sendEmail = async (to, subject, text) => {
     // try sending email with a single retry
     try {
       await transporter.sendMail({
-        from: process.env.EMAIL_USER,
+        from: `"Store It Now" <${process.env.EMAIL_USER}>`,
         to,
         subject,
         text,
+        ...(html ? { html } : {}),
       });
     } catch (err) {
       console.warn('First email send attempt failed, retrying once...', err.message);
       try {
         await transporter.sendMail({
-          from: process.env.EMAIL_USER,
+          from: `"Store It Now" <${process.env.EMAIL_USER}>`,
           to,
           subject,
           text,
+          ...(html ? { html } : {}),
         });
       } catch (err2) {
         console.error('Email send failed after retry:', err2.message);

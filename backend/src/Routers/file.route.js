@@ -53,10 +53,10 @@ router.get(
 
 
 
-router.get("/", getAllFiles);
+router.get("/", auth, getAllFiles);
 router.get("/storage", auth, getStorage);
 router.get("/my-files", auth, getMyFiles);
-router.delete("/:id", deleteFile);
+router.delete("/:id", auth, deleteFile);
 
 
 module.exports = router;

@@ -1,9 +1,35 @@
 const imagekit = require("../config/imagekit");
 const File = require("../models/file.model");
 const User = require("../models/user.model");
+const Folder = require("../models/folder.model");
+
+// FolderId diya ho to confirm karo wo user ka apna hi folder hai
+const assertOwnFolder = async (folderId, userId) => {
+  if (!folderId) return null;
+
+  const folder = await Folder.findById(folderId);
+
+  if (!folder || String(folder.owner) !== String(userId)) {
+    return false;
+  }
+
+  return folder;
+};
 
 const uploadFile = async (req, res) => {
   try {
+
+    const folderCheck = await assertOwnFolder(
+      req.body.folderId,
+      req.user.id
+    );
+
+    if (folderCheck === false) {
+      return res.status(403).json({
+        success: false,
+        message: "Invalid folder"
+      });
+    }
 
     const uploadedFile = await imagekit.upload({
       file: req.file.buffer,
@@ -16,6 +42,7 @@ const uploadFile = async (req, res) => {
         url: uploadedFile.url,
         fileType: req.file.mimetype,
         fileSize: req.file.size,
+        folder: req.body.folderId || null,
         owner: req.user.id
     });
 
@@ -39,6 +66,14 @@ const uploadFile = async (req, res) => {
 
     console.log(error);
 
+    // Multer ka size limit cross hua
+    if (error && error.code === "LIMIT_FILE_SIZE") {
+      return res.status(413).json({
+        success: false,
+        message: "File is too large. Maximum size is 25 MB.",
+      });
+    }
+
     return res.status(500).json({
       success: false,
       message: error.message,
@@ -51,7 +86,7 @@ const uploadFile = async (req, res) => {
 const getAllFiles = async (req, res) => {
   try {
 
-    const files = await File.find();
+    const files = await File.find({ owner: req.user.id });
 
     return res.status(200).json({
       success: true,
@@ -80,6 +115,14 @@ const deleteFile = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: "File not found"
+      });
+    }
+
+    // Sirf apna hi file delete karne do
+    if (String(file.owner) !== String(req.user.id)) {
+      return res.status(403).json({
+        success: false,
+        message: "Not allowed to delete this file"
       });
     }
 
@@ -167,8 +210,21 @@ const getStorage = async (req, res) => {
 const getFilesByFolder = async (req, res) => {
   try {
 
+    const folderCheck = await assertOwnFolder(
+      req.params.folderId,
+      req.user.id
+    );
+
+    if (folderCheck === false || !folderCheck) {
+      return res.status(404).json({
+        success: false,
+        message: "Folder not found"
+      });
+    }
+
     const files = await File.find({
-      folder: req.params.folderId
+      folder: req.params.folderId,
+      owner: req.user.id
     });
 
     return res.status(200).json({
@@ -192,15 +248,24 @@ const getFilesByFolder = async (req, res) => {
 const renameFile = async (req, res) => {
   try {
 
-    const file = await File.findByIdAndUpdate(
-      req.params.id,
-      {
-        fileName: req.body.fileName
-      },
-      {
-        new: true
-      }
-    );
+    const file = await File.findById(req.params.id);
+
+    if (!file || String(file.owner) !== String(req.user.id)) {
+      return res.status(404).json({
+        success: false,
+        message: "File not found"
+      });
+    }
+
+    if (!req.body.fileName || !req.body.fileName.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "File name is required"
+      });
+    }
+
+    file.fileName = req.body.fileName.trim();
+    await file.save();
 
     return res.status(200).json({
       success: true,
@@ -220,12 +285,16 @@ const renameFile = async (req, res) => {
 const searchFiles = async (req, res) => {
   try {
 
-    const query = req.query.query;
+    const query = (req.query.query || "").trim();
+
+    // Empty query = sab files wapas; regex ko escape taaki "( " jaisa
+    // input 500 na de
+    const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
     const files = await File.find({
       owner: req.user.id,
       fileName: {
-        $regex: query,
+        $regex: escaped,
         $options: "i"
       }
     });

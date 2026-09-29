@@ -15,3 +15,21 @@ export const getProfile = async () => {
 
   return response.data;
 };
+
+// Profile update (abhi sirf naam)
+export const updateProfile = async (name) => {
+
+  const token = localStorage.getItem("token");
+
+  const response = await api.patch(
+    "/users/profile",
+    { name },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    }
+  );
+
+  return response.data;
+};

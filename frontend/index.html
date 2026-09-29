@@ -4,7 +4,25 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="StoreItNow Cloud — securely upload, organize and access your files from anywhere." />
+    <meta name="theme-color" content="#fafafa" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0b0d12" media="(prefers-color-scheme: dark)" />
     <title>StoreItNow.cloud</title>
+    <script>
+      // Theme ko paint se pehle lagao taaki white flash na aaye
+      (function () {
+        try {
+          var stored = localStorage.getItem('sit-theme');
+          var dark =
+            stored === 'dark' ||
+            (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+          if (dark) document.documentElement.classList.add('dark');
+        } catch (e) {
+          // ignore
+        }
+      })();
+    </script>
   </head>
   <body>
    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
@@ -20,7 +38,7 @@
                 return s.replace(/~and~/g, "&");
               })
               .join("?");
-            
+
             window.history.replaceState(
               null,
               null,

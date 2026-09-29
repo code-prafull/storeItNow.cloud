@@ -112,11 +112,13 @@ function AdminDashboard() {
   };
 
   useEffect(() => {
-
+    // initial admin fetch — setState fetch ke baad hota hai
+    /* eslint-disable react-hooks/set-state-in-effect */
     fetchStats();
     fetchUsers();
     fetchFiles();
-
+    /* eslint-enable react-hooks/set-state-in-effect */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

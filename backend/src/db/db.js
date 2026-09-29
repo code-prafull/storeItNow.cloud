@@ -3,9 +3,9 @@ const mongoose = require('mongoose');
 // Connect to MongoDB
 async function connectDB(){
     const uri = process.env.MONGO_URI;
+    // Mongoose 7+ me useNewUrlParser / useUnifiedTopology hat chuke hain —
+    // rakhne par connect hi nahi hota tha.
     const opts = {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
         serverSelectionTimeoutMS: 5000,
         connectTimeoutMS: 10000,
     };

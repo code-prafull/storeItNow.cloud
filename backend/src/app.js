@@ -19,7 +19,22 @@ const app = express();
 connectDB();
 
 
-app.use(cors());
+// CORS_ORIGIN me comma-separated origins daalein; khali ho to sab allow.
+const corsOrigins = (process.env.CORS_ORIGIN || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+app.use(
+  cors(
+    corsOrigins.length
+      ? {
+          origin: corsOrigins,
+          credentials: true,
+        }
+      : {}
+  )
+);
 app.use(express.json());
 app.use(cookieParser());
 app.use("/api/files", fileRoutes);

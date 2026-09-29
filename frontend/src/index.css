@@ -1,11 +1,104 @@
-@import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+/* Dark mode class-based (html.dark) — Tailwind v4 default prefers-color-scheme nahi */
+@custom-variant dark (&:where(.dark, .dark *));
 
 /* Make Inter the default site font */
 html, body, #root {
 	height: 100%;
 }
 
+html {
+	color-scheme: light;
+}
+
+html.dark {
+	color-scheme: dark;
+}
+
 body {
 	font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+	background-color: #fafafa;
+	transition: background-color 0.25s ease;
+}
+
+html.dark body {
+	background-color: #0b0d12;
+}
+
+/* ── Scrollbar (thin, theme aware) ── */
+* {
+	scrollbar-width: thin;
+	scrollbar-color: rgba(15, 23, 42, 0.15) transparent;
+}
+
+html.dark * {
+	scrollbar-color: rgba(226, 232, 240, 0.15) transparent;
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+	background: rgba(15, 23, 42, 0.15);
+	border-radius: 999px;
+	border: 2px solid transparent;
+	background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(15, 23, 42, 0.3); background-clip: padding-box; }
+html.dark ::-webkit-scrollbar-thumb { background: rgba(226, 232, 240, 0.2); background-clip: padding-box; }
+
+/* ── Focus ring ── */
+:focus-visible {
+	outline: 2px solid #0078d4;
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
+/* ── Animations ── */
+@keyframes toastIn {
+	from { opacity: 0; transform: translateX(24px) scale(0.97); }
+	to { opacity: 1; transform: translateX(0) scale(1); }
+}
+@keyframes toastOut {
+	from { opacity: 1; transform: translateX(0); }
+	to { opacity: 0; transform: translateX(24px); }
+}
+.animate-toast-in { animation: toastIn 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.animate-toast-out { animation: toastOut 0.2s ease-in forwards; }
+
+@keyframes shimmer {
+	0% { background-position: -400px 0; }
+	100% { background-position: 400px 0; }
+}
+.skeleton {
+	background-image: linear-gradient(
+		90deg,
+		rgba(148, 163, 184, 0.10) 0%,
+		rgba(148, 163, 184, 0.25) 45%,
+		rgba(148, 163, 184, 0.10) 90%
+	);
+	background-size: 400px 100%;
+	background-repeat: no-repeat;
+	animation: shimmer 1.3s ease-in-out infinite;
+}
+
+@keyframes overlayIn {
+	from { opacity: 0; }
+	to { opacity: 1; }
+}
+.animate-overlay-in { animation: overlayIn 0.18s ease-out forwards; }
+
+@keyframes riseIn {
+	from { opacity: 0; transform: translateY(6px); }
+	to { opacity: 1; transform: translateY(0); }
+}
+.animate-rise { animation: riseIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+@media (prefers-reduced-motion: reduce) {
+	*, *::before, *::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+	}
 }

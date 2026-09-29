@@ -18,6 +18,23 @@ const userSchema = new mongoose.Schema({
     required: true
   },
 
+  // Auth provider: "local" (email+password) ya "google"
+  provider: {
+    type: String,
+    default: "local"
+  },
+
+  googleId: {
+    type: String,
+    default: null,
+    sparse: true
+  },
+
+  avatar: {
+    type: String,
+    default: null
+  },
+
   plan: {
     type: String,
     default: "free"
@@ -41,6 +58,12 @@ const userSchema = new mongoose.Schema({
   otpExpiry: {
     type: Date,
     default: null
+  },
+
+  // Kitni baar galat OTP daala (5 ke baad code invalidate ho jaata hai)
+  otpAttempts: {
+    type: Number,
+    default: 0
   },
 
   storageUsed: {

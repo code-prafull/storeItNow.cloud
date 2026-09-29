@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# Env files — secrets kabhi commit mat karo
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+
+# Build output
+dist/
+build/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
