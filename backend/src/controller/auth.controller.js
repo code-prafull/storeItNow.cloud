@@ -108,6 +108,26 @@ const issueOtp = (user, otp) => {
   user.otpAttempts = 0;
 };
 
+// Email fail ho jaye to "OTP sent" jhooth mat bolo — user inbox me kuch nahi
+// dekh kar atak jaata hai. Code wapas le lo (turant retry chalega, aur andekha
+// OTP DB me pada bhi na rahe) aur saaf-saaf 502 bhejo.
+const respondEmailFailure = async (res, user, what, emailErr) => {
+  console.error(
+    `${what} email send failed:`,
+    emailErr && emailErr.message ? emailErr.message : emailErr
+  );
+
+  if (user) {
+    clearOtp(user);
+    await user.save();
+  }
+
+  return res.status(502).json({
+    success: false,
+    message: "Could not send the code right now. Please try again.",
+  });
+};
+
 const invalidEmail = (res) =>
   res.status(400).json({
     success: false,
@@ -175,8 +195,7 @@ const register = async (req, res) => {
       try {
         await sendOtpEmail(email, resentOtp);
       } catch (emailErr) {
-        console.error("Register email send failed:", emailErr && emailErr.message ? emailErr.message : emailErr);
-        console.error(`[DEV-FALLBACK] OTP for ${email}: ${resentOtp}`);
+        return respondEmailFailure(res, existingUser, "Register", emailErr);
       }
 
       return res.status(201).json({
@@ -207,9 +226,7 @@ const register = async (req, res) => {
     try {
       await sendOtpEmail(email, otp);
     } catch (emailErr) {
-      console.error("Register email send failed:", emailErr && emailErr.message ? emailErr.message : emailErr);
-      console.error(`[DEV-FALLBACK] OTP for ${email}: ${otp}`);
-      // don't fail registration if email fails
+      return respondEmailFailure(res, user, "Register", emailErr);
     }
 
     return res.status(201).json({
@@ -448,8 +465,7 @@ const resendOtp = async (req, res) => {
     try {
       await sendOtpEmail(email, otp);
     } catch (emailErr) {
-      console.error("Resend email failed:", emailErr && emailErr.message ? emailErr.message : emailErr);
-      console.error(`[DEV-FALLBACK] OTP for ${email}: ${otp}`);
+      return respondEmailFailure(res, user, "Resend", emailErr);
     }
 
     return res.status(200).json({
@@ -512,9 +528,7 @@ const forgotPassword = async (req, res) => {
     try {
       await sendOtpEmail(email, otp, "reset");
     } catch (emailErr) {
-      console.error("Forgot-password email send failed:", emailErr && emailErr.message ? emailErr.message : emailErr);
-      console.error(`[DEV-FALLBACK] OTP for ${email}: ${otp}`);
-      // continue — OTP saved, respond success
+      return respondEmailFailure(res, user, "Forgot-password", emailErr);
     }
 
     return res.status(200).json({
