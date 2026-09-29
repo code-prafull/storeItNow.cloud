@@ -20,7 +20,10 @@ connectDB();
 
 
 // CORS_ORIGIN me comma-separated origins daalein; khali ho to sab allow.
-const corsOrigins = (process.env.CORS_ORIGIN || "")
+// CORS_ORIGIN_EXTRA bhi merge hota hai — Render dashboard me existing masked
+// value edit karne ke bajaye naya variable aasani se add ho jata hai.
+const corsOrigins = [process.env.CORS_ORIGIN || "", process.env.CORS_ORIGIN_EXTRA || ""]
+  .join(",")
   .split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);
