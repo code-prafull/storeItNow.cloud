@@ -5,7 +5,7 @@ import axios from "axios";
 const api = axios.create({
   baseURL:
     import.meta.env.VITE_API_URL ||
-    "https://storeitnow-cloud-1.onrender.com/api",
+    "https://storeitnow-cloud-1-jjr1.onrender.com/api",
   timeout: 20000,
 });
 
